@@ -137,6 +137,49 @@ describe("HTML to Markdown MCP Server", () => {
         assert.ok(error.message.includes("Either 'url' or 'html' parameter is required"));
       }
     });
+
+    it("should truncate content when maxLength is specified", async () => {
+      const longHtml = "<h1>Long Document</h1>" + "<p>Content</p>".repeat(100);
+      const result = await client.callTool({
+        name: "html_to_markdown",
+        arguments: {
+          html: longHtml,
+          includeMetadata: false,
+          maxLength: 100,
+        },
+      });
+
+      const text = result.content[0].text;
+      assert.ok(text.includes("[Content truncated"));
+      assert.ok(text.includes("Showing 100 of"));
+      // The truncated content should be around 100 chars + truncation message
+      assert.ok(text.length > 100);
+      assert.ok(text.length < 500); // reasonable upper bound
+    });
+
+    it("should save to file when saveToFile is specified", async () => {
+      const filePath = "./test-save-to-file.md";
+      const result = await client.callTool({
+        name: "html_to_markdown",
+        arguments: {
+          html: "<h1>Save Test</h1><p>This should be saved to a file.</p>",
+          includeMetadata: true,
+          saveToFile: filePath,
+        },
+      });
+
+      const text = result.content[0].text;
+      assert.ok(text.includes("Successfully converted and saved"));
+      assert.ok(text.includes("Save Test")); // Title should be in the summary
+      assert.ok(existsSync(filePath));
+
+      const savedContent = await readFile(filePath, "utf-8");
+      assert.ok(savedContent.includes("# Save Test"));
+      assert.ok(savedContent.includes("This should be saved to a file"));
+
+      // Cleanup
+      await unlink(filePath);
+    });
   });
 
   describe("save_markdown tool", () => {

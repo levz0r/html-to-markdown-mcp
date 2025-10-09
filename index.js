@@ -56,6 +56,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Include metadata header (source URL, title, and timestamp) in the output",
               default: true,
             },
+            maxLength: {
+              type: "number",
+              description: "Maximum length of the returned markdown content in characters. If the content exceeds this length, it will be truncated with a message indicating the truncation. Use this for large pages to avoid token limits. Default: no limit.",
+            },
+            saveToFile: {
+              type: "string",
+              description: "Optional file path to save the full markdown content to. When specified, the full content is saved to the file and a summary is returned instead of the full content. Useful for very large pages.",
+            },
           },
         },
       },
@@ -99,7 +107,7 @@ function extractTitle(html) {
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   if (request.params.name === "html_to_markdown") {
-    const { url, html, includeMetadata = true } = request.params.arguments;
+    const { url, html, includeMetadata = true, maxLength, saveToFile } = request.params.arguments;
 
     if (!url && !html) {
       throw new Error("Either 'url' or 'html' parameter is required");
@@ -136,6 +144,37 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const timestamp = new Date().toISOString();
 
         content = `# ${metadataTitle}\n\n**Source:** ${metadataUrl}\n**Saved:** ${timestamp}\n\n---\n\n${markdown}`;
+      }
+
+      // Save to file if requested
+      if (saveToFile) {
+        const absolutePath = resolve(saveToFile);
+        await writeFile(absolutePath, content, "utf-8");
+        console.error(`Saved markdown to: ${absolutePath}`);
+
+        const metadataTitle = pageTitle || extractTitle(htmlContent);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Successfully converted and saved to: ${absolutePath}\n\nTitle: ${metadataTitle}\nSize: ${content.length} characters\nLines: ${content.split('\n').length}`,
+            },
+          ],
+        };
+      }
+
+      // Truncate if maxLength is specified and content exceeds it
+      if (maxLength && content.length > maxLength) {
+        const truncated = content.substring(0, maxLength);
+        const remainingChars = content.length - maxLength;
+        return {
+          content: [
+            {
+              type: "text",
+              text: `${truncated}\n\n---\n\n[Content truncated. Showing ${maxLength} of ${content.length} characters. ${remainingChars} characters omitted. Use saveToFile parameter to save the full content.]`,
+            },
+          ],
+        };
       }
 
       return {

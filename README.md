@@ -102,6 +102,8 @@ Fetch HTML from a URL or convert provided HTML content to Markdown format. **Thi
 - `url` (string): URL to fetch and convert (either `url` or `html` is required)
 - `html` (string): Raw HTML content to convert (either `url` or `html` is required)
 - `includeMetadata` (boolean, optional): Include metadata header (default: true)
+- `maxLength` (number, optional): Maximum length of returned content in characters. Content exceeding this will be truncated with a message. Useful for large pages to avoid token limits.
+- `saveToFile` (string, optional): File path to save the full content. When specified, saves the complete markdown and returns only a summary. Recommended for very large pages.
 
 **Example 1: Fetch from URL (Recommended)**
 
@@ -116,6 +118,24 @@ Fetch HTML from a URL or convert provided HTML content to Markdown format. **Thi
 ```javascript
 {
   "html": "<h1>Hello World</h1><p>This is a <strong>test</strong>.</p>"
+}
+```
+
+**Example 3: Fetch large page and save directly to file**
+
+```javascript
+{
+  "url": "https://www.docuseal.com/docs/api",
+  "saveToFile": "./docuseal-api.md"
+}
+```
+
+**Example 4: Limit returned content length**
+
+```javascript
+{
+  "url": "https://example.com",
+  "maxLength": 5000
 }
 ```
 
