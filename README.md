@@ -223,17 +223,8 @@ The test suite includes:
 - HTML to markdown conversion tests
 - URL fetching tests
 - File saving tests
+- Truncation and large page handling tests
 - Integration workflow tests
-
-Legacy test scripts are also available:
-
-```bash
-# Test basic HTML conversion
-node test.js
-
-# Test URL fetching
-node test-url.js
-```
 
 ## Technical Details
 
