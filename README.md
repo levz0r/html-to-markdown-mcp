@@ -226,6 +226,34 @@ The test suite includes:
 - Truncation and large page handling tests
 - Integration workflow tests
 
+### Publishing a New Version
+
+The project uses automated CI/CD for publishing to npm:
+
+1. **Update version** using npm version scripts:
+   ```bash
+   npm run version:patch  # 1.0.0 -> 1.0.1
+   npm run version:minor  # 1.0.0 -> 1.1.0
+   npm run version:major  # 1.0.0 -> 2.0.0
+   ```
+
+2. **Push the tag** to trigger automated publishing:
+   ```bash
+   git push && git push --tags
+   ```
+
+3. **GitHub Actions** will automatically:
+   - Run all tests
+   - Publish to npm if tests pass
+   - Add provenance information to the package
+
+**Manual publishing** (if needed):
+```bash
+npm run release:patch --otp=<code>
+npm run release:minor --otp=<code>
+npm run release:major --otp=<code>
+```
+
 ## Technical Details
 
 - **Protocol:** Model Context Protocol (MCP)
