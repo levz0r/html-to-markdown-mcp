@@ -1,5 +1,8 @@
 # HTML to Markdown MCP Server
 
+[![npm version](https://badge.fury.io/js/html-to-markdown-mcp.svg)](https://www.npmjs.com/package/html-to-markdown-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/html-to-markdown-mcp.svg)](https://www.npmjs.com/package/html-to-markdown-mcp)
+
 An MCP (Model Context Protocol) server that converts HTML content to Markdown format using Turndown.js.
 
 ## Features
@@ -14,7 +17,13 @@ An MCP (Model Context Protocol) server that converts HTML content to Markdown fo
 ## Installation
 
 ```bash
-npm install
+npm install -g html-to-markdown-mcp
+```
+
+Or use with npx (no installation required):
+
+```bash
+npx html-to-markdown-mcp
 ```
 
 ## Usage
@@ -24,13 +33,52 @@ npm install
 Add the server using the Claude CLI:
 
 ```bash
-claude mcp add --transport stdio html-to-markdown -- node /absolute/path/to/html-to-markdown-mcp/index.js
+claude mcp add --transport stdio html-to-markdown -- npx html-to-markdown-mcp
+```
+
+Or if installed globally:
+
+```bash
+claude mcp add --transport stdio html-to-markdown -- html-to-markdown-mcp
 ```
 
 ### With Claude Desktop
 
 Add this server to your Claude Desktop configuration file:
 
+**Using npx (recommended):**
+```json
+{
+  "mcpServers": {
+    "html-to-markdown": {
+      "command": "npx",
+      "args": ["html-to-markdown-mcp"]
+    }
+  }
+}
+```
+
+**Or if installed globally:**
+```json
+{
+  "mcpServers": {
+    "html-to-markdown": {
+      "command": "html-to-markdown-mcp"
+    }
+  }
+}
+```
+
+### Using Local Development Version
+
+If you're developing or testing locally, you can add the MCP server directly from your local code:
+
+**With Claude Code:**
+```bash
+claude mcp add --transport stdio html-to-markdown -- node /absolute/path/to/html-to-markdown-mcp/index.js
+```
+
+**With Claude Desktop:**
 ```json
 {
   "mcpServers": {
@@ -41,6 +89,8 @@ Add this server to your Claude Desktop configuration file:
   }
 }
 ```
+
+Replace `/absolute/path/to/html-to-markdown-mcp` with the actual path to your cloned repository.
 
 ### Available Tools
 
@@ -98,7 +148,23 @@ The MCP server will automatically be used by Claude when you:
 - "Convert this webpage to Markdown"
 - "Extract the main content from this URL"
 
-## Testing
+## Local Development
+
+If you want to contribute or modify the server:
+
+```bash
+# Clone the repository
+git clone https://github.com/levz0r/html-to-markdown-mcp.git
+cd html-to-markdown-mcp
+
+# Install dependencies
+npm install
+
+# Run the server
+npm start
+```
+
+### Testing
 
 Test the server with the included test scripts:
 
@@ -108,12 +174,6 @@ node test.js
 
 # Test URL fetching
 node test-url.js
-```
-
-Or run the server directly:
-
-```bash
-npm start
 ```
 
 The server will start and listen for MCP protocol messages on stdin/stdout.

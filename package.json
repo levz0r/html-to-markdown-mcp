@@ -8,11 +8,25 @@
     "html-to-markdown-mcp": "./index.js"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
+    "release:patch": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish"
   },
   "keywords": ["mcp", "html", "markdown", "converter"],
-  "author": "",
+  "author": "levz0r",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/levz0r/html-to-markdown-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/levz0r/html-to-markdown-mcp/issues"
+  },
+  "homepage": "https://github.com/levz0r/html-to-markdown-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.1",
     "turndown": "^7.2.1"
