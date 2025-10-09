@@ -1,0 +1,15 @@
+# Test files
+test/
+*.test.js
+
+# CI/CD
+.github/
+
+# Development files
+.gitignore
+*.md
+!README.md
+
+# Misc
+.DS_Store
+*.log
