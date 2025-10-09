@@ -7,6 +7,8 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import TurndownService from "turndown";
+import { writeFile } from "fs/promises";
+import { resolve } from "path";
 
 // Create MCP server
 const server = new Server(
@@ -55,6 +57,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               default: true,
             },
           },
+        },
+      },
+      {
+        name: "save_markdown",
+        description: "Save markdown content to a file. Use this to persist converted HTML to a markdown file on disk.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            content: {
+              type: "string",
+              description: "The markdown content to save",
+            },
+            filePath: {
+              type: "string",
+              description: "The file path where the markdown should be saved (can be relative or absolute)",
+            },
+          },
+          required: ["content", "filePath"],
         },
       },
     ],
@@ -132,6 +152,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           {
             type: "text",
             text: `Error converting HTML to Markdown: ${error.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
+  if (request.params.name === "save_markdown") {
+    const { content, filePath } = request.params.arguments;
+
+    if (!content) {
+      throw new Error("'content' parameter is required");
+    }
+
+    if (!filePath) {
+      throw new Error("'filePath' parameter is required");
+    }
+
+    try {
+      const absolutePath = resolve(filePath);
+      await writeFile(absolutePath, content, "utf-8");
+      console.error(`Saved markdown to: ${absolutePath}`);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Successfully saved markdown to: ${absolutePath}`,
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error saving markdown file: ${error.message}`,
           },
         ],
         isError: true,

@@ -134,6 +134,25 @@ Fetch HTML from a URL or convert provided HTML content to Markdown format. **Thi
 This domain is for use in illustrative examples...
 ```
 
+#### `save_markdown`
+
+Save markdown content to a file on disk. Use this to persist converted HTML or any markdown content.
+
+**Parameters:**
+- `content` (string, required): The markdown content to save
+- `filePath` (string, required): The file path where the markdown should be saved (can be relative or absolute)
+
+**Example:**
+
+```javascript
+{
+  "content": "# My Document\n\nThis is some markdown content.",
+  "filePath": "./output/document.md"
+}
+```
+
+**Usage:** You can chain both tools together - first convert HTML to markdown, then save the result to a file.
+
 ### When does it activate?
 
 The MCP server will automatically be used by Claude when you:
@@ -141,12 +160,15 @@ The MCP server will automatically be used by Claude when you:
 - Request to convert HTML to Markdown
 - Need to extract content from a URL
 - Ask to summarize or analyze a webpage
+- Request to save markdown content to a file
 
 **Example prompts that trigger it:**
 - "What's on https://example.com?"
 - "Fetch and summarize this article: https://..."
 - "Convert this webpage to Markdown"
 - "Extract the main content from this URL"
+- "Save this webpage as a markdown file"
+- "Fetch https://example.com and save it to article.md"
 
 ## Local Development
 
@@ -166,7 +188,24 @@ npm start
 
 ### Testing
 
-Test the server with the included test scripts:
+Run the test suite using Node's built-in test runner:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode (re-runs on file changes)
+npm run test:watch
+```
+
+The test suite includes:
+- Tool discovery tests
+- HTML to markdown conversion tests
+- URL fetching tests
+- File saving tests
+- Integration workflow tests
+
+Legacy test scripts are also available:
 
 ```bash
 # Test basic HTML conversion
@@ -175,8 +214,6 @@ node test.js
 # Test URL fetching
 node test-url.js
 ```
-
-The server will start and listen for MCP protocol messages on stdin/stdout.
 
 ## Technical Details
 
