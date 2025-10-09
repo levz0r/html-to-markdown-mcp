@@ -1,0 +1,20 @@
+{
+  "name": "html-to-markdown-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for converting HTML to Markdown using Turndown.js",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "html-to-markdown-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["mcp", "html", "markdown", "converter"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "turndown": "^7.2.1"
+  }
+}
