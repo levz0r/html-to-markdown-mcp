@@ -5,6 +5,25 @@
 
 An MCP (Model Context Protocol) server that converts HTML content to Markdown format using Turndown.js.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [With Claude Code](#with-claude-code)
+  - [With Claude Desktop](#with-claude-desktop)
+  - [With Cursor](#with-cursor)
+  - [With Codex](#with-codex)
+  - [Using Local Development Version](#using-local-development-version)
+  - [Available Tools](#available-tools)
+  - [When does it activate?](#when-does-it-activate)
+- [Local Development](#local-development)
+  - [Testing](#testing)
+  - [Publishing a New Version](#publishing-a-new-version)
+- [Technical Details](#technical-details)
+- [Related Projects](#related-projects)
+- [License](#license)
+
 ## Features
 
 - 🌐 **Fetch and convert web pages** - Automatically fetch HTML from any URL
@@ -68,6 +87,84 @@ Add this server to your Claude Desktop configuration file:
   }
 }
 ```
+
+### With Cursor
+
+Add this server to your Cursor MCP settings file:
+
+**Using npx (recommended):**
+```json
+{
+  "mcpServers": {
+    "html-to-markdown": {
+      "command": "npx",
+      "args": ["html-to-markdown-mcp"]
+    }
+  }
+}
+```
+
+**Or if installed globally:**
+```json
+{
+  "mcpServers": {
+    "html-to-markdown": {
+      "command": "html-to-markdown-mcp"
+    }
+  }
+}
+```
+
+**Configuration methods:**
+
+1. **Via Cursor Settings (Recommended):**
+   - Open Cursor Settings: `⌘ + ,` (macOS) or `Ctrl + ,` (Windows/Linux)
+   - Navigate to **File** → **Preferences** → **Cursor Settings**
+   - Select the **MCP** option
+   - Add a new global MCP server with the configuration above
+
+2. **Manual file editing:**
+   - **Global:** `~/.cursor/mcp.json` (available across all projects)
+   - **Local:** `.cursor/mcp.json` in your project directory (project-specific)
+
+After adding the configuration, restart Cursor for the changes to take effect.
+
+### With Codex
+
+Add this server to your Codex configuration using the CLI or by editing the config file:
+
+**Option 1: Using Codex CLI (Recommended):**
+
+```bash
+codex mcp add html-to-markdown -- npx -y html-to-markdown-mcp
+```
+
+Or if installed globally:
+
+```bash
+codex mcp add html-to-markdown -- html-to-markdown-mcp
+```
+
+**Option 2: Manual Configuration:**
+
+Edit `~/.codex/config.toml` and add:
+
+```toml
+[mcp_servers.html-to-markdown]
+command = "npx"
+args = ["-y", "html-to-markdown-mcp"]
+```
+
+Or if installed globally:
+
+```toml
+[mcp_servers.html-to-markdown]
+command = "html-to-markdown-mcp"
+```
+
+The configuration file is located at `~/.codex/config.toml` on all platforms (macOS, Linux, and Windows).
+
+After updating the configuration, restart Codex or your Codex session for the changes to take effect.
 
 ### Using Local Development Version
 
