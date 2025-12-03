@@ -7,8 +7,14 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import TurndownService from "turndown";
-import { writeFile } from "fs/promises";
-import { resolve } from "path";
+import { writeFile, readFile } from "fs/promises";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+
+// Get package version for user-agent
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(await readFile(resolve(__dirname, "package.json"), "utf-8"));
+const USER_AGENT = `html-to-markdown-mcp/${pkg.version} (+https://github.com/levz0r/html-to-markdown-mcp/blob/master/bot.txt)`;
 
 // Create MCP server
 const server = new Server(
@@ -121,7 +127,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // If URL is provided, fetch the HTML
       if (url) {
         console.error(`Fetching HTML from: ${url}`);
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          headers: {
+            "User-Agent": USER_AGENT,
+          },
+        });
 
         if (!response.ok) {
           throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);

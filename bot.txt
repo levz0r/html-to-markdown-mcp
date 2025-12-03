@@ -1,0 +1,30 @@
+# html-to-markdown-mcp Bot Information
+
+## What is this?
+
+This is an MCP (Model Context Protocol) server that fetches web pages and converts
+HTML content to Markdown format. It is used by AI assistants like Claude to read
+and understand web content.
+
+## Bot Details
+
+- **Name:** html-to-markdown-mcp
+- **Type:** Web content fetcher and converter
+- **Purpose:** Converting HTML pages to Markdown for AI consumption
+- **Repository:** https://github.com/levz0r/html-to-markdown-mcp
+- **Author:** Lev Gelfenbuim (hi@lev.engineer)
+
+## Behavior
+
+- Fetches only explicitly requested URLs (no crawling or spidering)
+- Makes single requests per user action
+- Respects HTTP error codes
+- Does not bypass authentication or access restricted content
+- No automated mass requests
+
+## Contact
+
+If you have concerns about this bot accessing your website, please open an issue at:
+https://github.com/levz0r/html-to-markdown-mcp/issues
+
+Or contact the author directly at: hi@lev.engineer
