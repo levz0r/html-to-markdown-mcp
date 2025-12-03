@@ -1,6 +1,6 @@
 {
   "name": "html-to-markdown-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP server for converting HTML to Markdown using Turndown.js",
   "type": "module",
   "main": "index.js",
