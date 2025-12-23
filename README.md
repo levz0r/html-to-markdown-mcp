@@ -11,6 +11,7 @@ An MCP (Model Context Protocol) server that converts HTML content to Markdown fo
 - [Installation](#installation)
 - [Usage](#usage)
   - [With Claude Code](#with-claude-code)
+  - [With Claude Code (Plugin)](#with-claude-code-plugin)
   - [With Claude Desktop](#with-claude-desktop)
   - [With Cursor](#with-cursor)
   - [With Codex](#with-codex)
@@ -59,6 +60,35 @@ Or if installed globally:
 
 ```bash
 claude mcp add --transport stdio html-to-markdown -- html-to-markdown-mcp
+```
+
+### With Claude Code (Plugin)
+
+This project can also be installed as a Claude Code plugin, which bundles the MCP server and makes it easy to share with teams.
+
+**Install directly from GitHub:**
+
+```bash
+/plugin marketplace add levz0r/html-to-markdown-mcp
+/plugin install html-to-markdown@levz0r/html-to-markdown-mcp
+```
+
+**Or enable for your team** by adding to your project's `.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "levz0r/html-to-markdown-mcp": {
+      "source": {
+        "source": "github",
+        "repo": "levz0r/html-to-markdown-mcp"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "html-to-markdown@levz0r/html-to-markdown-mcp": true
+  }
+}
 ```
 
 ### With Claude Desktop

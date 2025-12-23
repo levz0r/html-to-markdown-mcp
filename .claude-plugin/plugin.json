@@ -1,0 +1,12 @@
+{
+  "name": "html-to-markdown",
+  "description": "Convert HTML to Markdown using Turndown.js. Fetch web pages and extract clean, readable markdown content.",
+  "version": "1.0.2",
+  "author": {
+    "name": "levz0r",
+    "email": "hi@lev.engineer"
+  },
+  "repository": "https://github.com/levz0r/html-to-markdown-mcp",
+  "homepage": "https://github.com/levz0r/html-to-markdown-mcp#readme",
+  "license": "MIT"
+}
