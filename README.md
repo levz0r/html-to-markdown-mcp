@@ -1,5 +1,7 @@
 # HTML to Markdown MCP Server
 
+[![SafeSkill 87/100](https://img.shields.io/badge/SafeSkill-87%2F100_Passes%20with%20Notes-yellow)](https://safeskill.dev/scan/levz0r-html-to-markdown-mcp)
+
 [![npm version](https://badge.fury.io/js/html-to-markdown-mcp.svg)](https://www.npmjs.com/package/html-to-markdown-mcp)
 [![npm downloads](https://img.shields.io/npm/dm/html-to-markdown-mcp.svg)](https://www.npmjs.com/package/html-to-markdown-mcp)
 
