@@ -10,6 +10,84 @@ import TurndownService from "turndown";
 import { writeFile, readFile } from "fs/promises";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import { lookup } from "dns/promises";
+
+// SSRF protection: validate URLs before fetching (CWE-918)
+const BLOCKED_IP_RANGES = [
+  // Loopback
+  { prefix: "127.", mask: null },
+  // IPv6 loopback
+  { exact: "::1" },
+  // Link-local (cloud metadata endpoints like 169.254.169.254)
+  { prefix: "169.254.", mask: null },
+  // RFC 1918 private ranges
+  { prefix: "10.", mask: null },
+  { prefix: "172.", min: 16, max: 31 }, // 172.16.0.0 - 172.31.255.255
+  { prefix: "192.168.", mask: null },
+  // IPv6 private/link-local
+  { prefix: "fe80:", mask: null },
+  { prefix: "fc00:", mask: null },
+  { prefix: "fd", mask: null },
+  // Unspecified
+  { exact: "0.0.0.0" },
+  { exact: "::" },
+];
+
+function isPrivateIP(ip) {
+  for (const range of BLOCKED_IP_RANGES) {
+    if (range.exact && ip === range.exact) return true;
+    if (range.prefix && ip.startsWith(range.prefix)) {
+      if (range.min !== undefined) {
+        const secondOctet = parseInt(ip.split(".")[1], 10);
+        if (secondOctet >= range.min && secondOctet <= range.max) return true;
+      } else {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Allow private network access via --allow-local flag or ALLOW_LOCAL_NETWORK=true env var
+const allowLocalNetwork = process.argv.includes("--allow-local") ||
+  process.env.ALLOW_LOCAL_NETWORK === "true";
+
+async function validateUrl(urlString) {
+  let parsed;
+  try {
+    parsed = new URL(urlString);
+  } catch {
+    throw new Error("Invalid URL format");
+  }
+
+  // Only allow http and https schemes
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(`URL scheme '${parsed.protocol.slice(0, -1)}' is not allowed. Only http and https are supported.`);
+  }
+
+  // Resolve hostname to IP and check against blocked ranges (unless opted out)
+  if (!allowLocalNetwork) {
+    const hostname = parsed.hostname;
+
+    // Check if hostname is already an IP literal
+    if (isPrivateIP(hostname)) {
+      throw new Error("URLs pointing to private or internal network addresses are not allowed. Use --allow-local flag to permit local network access.");
+    }
+
+    // DNS resolution check
+    try {
+      const { address } = await lookup(hostname);
+      if (isPrivateIP(address)) {
+        throw new Error("URLs pointing to private or internal network addresses are not allowed. Use --allow-local flag to permit local network access.");
+      }
+    } catch (err) {
+      if (err.message.includes("not allowed")) throw err;
+      throw new Error(`Could not resolve hostname: ${hostname}`);
+    }
+  }
+
+  return parsed;
+}
 
 // Get package version for user-agent
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -124,8 +202,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       let pageUrl = url;
       let pageTitle = null;
 
-      // If URL is provided, fetch the HTML
+      // If URL is provided, validate and fetch the HTML
       if (url) {
+        await validateUrl(url);
         console.error(`Fetching HTML from: ${url}`);
         const response = await fetch(url, {
           headers: {

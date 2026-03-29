@@ -4,16 +4,31 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { readFile, unlink } from "fs/promises";
 import { existsSync } from "fs";
+import { createServer } from "http";
 
 describe("HTML to Markdown MCP Server", () => {
   let client;
   let transport;
+  let httpServer;
+  let httpPort;
 
   before(async () => {
-    // Create client and connect
+    // Start a local HTTP server for URL fetch tests
+    httpServer = createServer((req, res) => {
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end("<html><head><title>Test Page</title></head><body><h1>Hello from local server</h1><p>Test content</p></body></html>");
+    });
+    await new Promise((resolve) => {
+      httpServer.listen(0, "127.0.0.1", () => {
+        httpPort = httpServer.address().port;
+        resolve();
+      });
+    });
+
+    // Create client and connect (--allow-local so URL fetch test can reach local server)
     transport = new StdioClientTransport({
       command: "node",
-      args: ["./index.js"],
+      args: ["./index.js", "--allow-local"],
     });
 
     client = new Client(
@@ -32,6 +47,7 @@ describe("HTML to Markdown MCP Server", () => {
   after(async () => {
     // Cleanup
     await client.close();
+    httpServer.close();
 
     // Remove test files
     const testFiles = [
@@ -87,17 +103,18 @@ describe("HTML to Markdown MCP Server", () => {
     });
 
     it("should fetch and convert URL", async () => {
+      const url = `http://127.0.0.1:${httpPort}/test-page`;
       const result = await client.callTool({
         name: "html_to_markdown",
         arguments: {
-          url: "https://example.com",
+          url,
           includeMetadata: true,
         },
       });
 
       assert.strictEqual(result.content[0].type, "text");
-      assert.ok(result.content[0].text.includes("Example Domain"));
-      assert.ok(result.content[0].text.includes("**Source:** https://example.com"));
+      assert.ok(result.content[0].text.includes("Hello from local server"));
+      assert.ok(result.content[0].text.includes(`**Source:** ${url}`));
     });
 
     it("should include metadata when requested", async () => {
@@ -227,6 +244,116 @@ describe("HTML to Markdown MCP Server", () => {
         assert.fail("Should have thrown an error");
       } catch (error) {
         assert.ok(error.message.includes("'filePath' parameter is required"));
+      }
+    });
+  });
+
+  describe("SSRF protection", () => {
+    let ssrfClient;
+    let ssrfTransport;
+
+    before(async () => {
+      // Separate server instance WITHOUT --allow-local for SSRF tests
+      ssrfTransport = new StdioClientTransport({
+        command: "node",
+        args: ["./index.js"],
+      });
+      ssrfClient = new Client(
+        { name: "ssrf-test-client", version: "1.0.0" },
+        { capabilities: {} }
+      );
+      await ssrfClient.connect(ssrfTransport);
+    });
+
+    after(async () => {
+      await ssrfClient.close();
+    });
+
+    it("should block loopback URLs", async () => {
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "http://127.0.0.1:9999/ssrf" },
+      });
+      assert.strictEqual(result.isError, true);
+      assert.ok(result.content[0].text.includes("private or internal"));
+    });
+
+    it("should block localhost URLs", async () => {
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "http://localhost:9999/ssrf" },
+      });
+      assert.strictEqual(result.isError, true);
+      assert.ok(result.content[0].text.includes("private or internal"));
+    });
+
+    it("should block cloud metadata endpoint", async () => {
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "http://169.254.169.254/latest/meta-data/" },
+      });
+      assert.strictEqual(result.isError, true);
+      assert.ok(result.content[0].text.includes("private or internal"));
+    });
+
+    it("should block RFC 1918 private ranges (10.x)", async () => {
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "http://10.0.0.1/admin" },
+      });
+      assert.strictEqual(result.isError, true);
+      assert.ok(result.content[0].text.includes("private or internal"));
+    });
+
+    it("should block RFC 1918 private ranges (192.168.x)", async () => {
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "http://192.168.1.1/admin" },
+      });
+      assert.strictEqual(result.isError, true);
+      assert.ok(result.content[0].text.includes("private or internal"));
+    });
+
+    it("should block RFC 1918 private ranges (172.16-31.x)", async () => {
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "http://172.16.0.1/admin" },
+      });
+      assert.strictEqual(result.isError, true);
+      assert.ok(result.content[0].text.includes("private or internal"));
+    });
+
+    it("should block file:// scheme", async () => {
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "file:///etc/passwd" },
+      });
+      assert.strictEqual(result.isError, true);
+      assert.ok(result.content[0].text.includes("not allowed"));
+    });
+
+    it("should block ftp:// scheme", async () => {
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "ftp://internal.server/data" },
+      });
+      assert.strictEqual(result.isError, true);
+      assert.ok(result.content[0].text.includes("not allowed"));
+    });
+
+    it("should allow valid public URLs (not blocked by SSRF check)", async () => {
+      // We only verify the URL passes validation (no SSRF error).
+      // The fetch itself may fail due to network/TLS issues in CI,
+      // so we just confirm the error is NOT an SSRF block.
+      const result = await ssrfClient.callTool({
+        name: "html_to_markdown",
+        arguments: { url: "https://example.com", includeMetadata: false },
+      });
+      if (result.isError) {
+        assert.ok(!result.content[0].text.includes("private or internal"),
+          "Public URL should not be blocked by SSRF protection");
+        assert.ok(!result.content[0].text.includes("not allowed"),
+          "HTTPS scheme should be allowed");
       }
     });
   });
