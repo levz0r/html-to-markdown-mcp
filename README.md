@@ -21,6 +21,9 @@ An MCP (Model Context Protocol) server that converts HTML content to Markdown fo
 - [Local Development](#local-development)
   - [Testing](#testing)
   - [Publishing a New Version](#publishing-a-new-version)
+- [Security](#security)
+  - [SSRF Protection](#ssrf-protection)
+  - [Allowing Local Network Access](#allowing-local-network-access)
 - [Technical Details](#technical-details)
 - [Related Projects](#related-projects)
 - [License](#license)
@@ -33,6 +36,7 @@ An MCP (Model Context Protocol) server that converts HTML content to Markdown fo
 - 🗑️ Automatically removes unwanted elements (scripts, styles, etc.)
 - 📊 Auto-extracts page titles and metadata
 - ⚡ Fast conversion using Turndown.js
+- 🔒 **SSRF protection** - Blocks requests to private/internal networks by default
 
 ## Installation
 
@@ -351,6 +355,7 @@ The test suite includes:
 - URL fetching tests
 - File saving tests
 - Truncation and large page handling tests
+- SSRF protection tests
 - Integration workflow tests
 
 ### Publishing a New Version
@@ -380,6 +385,47 @@ npm run release:patch --otp=<code>
 npm run release:minor --otp=<code>
 npm run release:major --otp=<code>
 ```
+
+## Security
+
+### SSRF Protection
+
+By default, the server blocks URL requests to private and internal network addresses to prevent [Server-Side Request Forgery (SSRF)](https://owasp.org/www-community/attacks/Server-Side_Request_Forgery) attacks. This includes:
+
+- Loopback addresses (`127.0.0.0/8`, `::1`)
+- Private networks (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`)
+- Link-local / cloud metadata endpoints (`169.254.0.0/16`)
+- Non-HTTP(S) schemes (`file://`, `ftp://`, etc.)
+
+DNS resolution is checked to prevent bypass via hostnames that resolve to private IPs.
+
+### Allowing Local Network Access
+
+If you need to convert HTML from local or internal servers (e.g., a local dev server), you can opt in with the `--allow-local` flag or the `ALLOW_LOCAL_NETWORK` environment variable:
+
+```bash
+# Via CLI flag
+npx html-to-markdown-mcp --allow-local
+```
+
+```bash
+# Via environment variable
+ALLOW_LOCAL_NETWORK=true npx html-to-markdown-mcp
+```
+
+**Claude Desktop / Cursor configuration with local access:**
+```json
+{
+  "mcpServers": {
+    "html-to-markdown": {
+      "command": "npx",
+      "args": ["html-to-markdown-mcp", "--allow-local"]
+    }
+  }
+}
+```
+
+> **Warning:** Only enable local network access if you trust the AI agent's URL inputs. With this flag enabled, the server can reach internal services, localhost ports, and cloud metadata endpoints.
 
 ## Technical Details
 
