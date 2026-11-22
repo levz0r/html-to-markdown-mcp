@@ -35,7 +35,7 @@
   },
   "homepage": "https://github.com/levz0r/html-to-markdown-mcp#readme",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.19.1",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "turndown": "^7.2.1"
   }
 }
